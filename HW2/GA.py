@@ -15,28 +15,14 @@ class GA :
     def __init__(self,input):
         self.input = input
         self.size = len(input)
-        self.minima = 0
-        self.ans = list(range(self.size))
-        self.arr = list(range(self.size))
-        for i in range(self.size):
-            self.minima += self.input[i][i]
+        self.pop_size = 0               #Population size
+        self.chromosomes = 0            #Chromosomes num
+        self.selected_chromosomes = []  #Selected chromosomes
+        self.best_chromosomes = []      #Best chromosome
+        self.numOfGene = self.size      #Number of genes in chromosome
+        self.fitness = []               #Fitness for each chromosome
+        
 
-    def permutation(self,size):
-        if size == 1:
-            temp = 0
-            for i in range(self.size):
-                temp += self.input[i][self.arr[i]]
-            if self.minima > temp:
-                self.minima = temp
-                self.ans = copy(self.arr)
-                
-
-        for i in range(size):
-            self.permutation(size-1)
-            if(size & 1):
-                self.arr[0],self.arr[size - 1] = self.arr[size - 1],self.arr[0]
-            else:
-                self.arr[i],self.arr[size - 1] = self.arr[size - 1],self.arr[i]
 
 ###########################
 if __name__ == '__main__':
@@ -49,7 +35,6 @@ if __name__ == '__main__':
             input = data[key]
             # print(input)
             bf_solver = GA(input)
-            bf_solver.permutation(len(input))
             assignment = bf_solver.ans # ⽤演算法得出的答案
             solver = Problem(input)
             print(i)
