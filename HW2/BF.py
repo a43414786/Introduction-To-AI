@@ -1,4 +1,3 @@
-from copy import copy
 import json
 
 class Problem:
@@ -21,6 +20,12 @@ class BF :
         for i in range(self.size):
             self.minima += self.input[i][i]
 
+    def copy(self):
+        temp = []
+        for i in self.arr:
+            temp.append(i)
+        return temp
+
     def permutation(self,size):
         if size == 1:
             temp = 0
@@ -28,7 +33,7 @@ class BF :
                 temp += self.input[i][self.arr[i]]
             if self.minima > temp:
                 self.minima = temp
-                self.ans = copy(self.arr)
+                self.ans = self.copy()
                 
 
         for i in range(size):
@@ -52,7 +57,7 @@ if __name__ == '__main__':
             bf_solver.permutation(len(input))
             assignment = bf_solver.ans # ⽤演算法得出的答案
             solver = Problem(input)
-            print(i)
+            print(f'題號:{i}')
             print('Assignment:', assignment) # print 出分配結果
             print('Cost:', solver.cost(assignment)) # print 出 cost 是多少
             
