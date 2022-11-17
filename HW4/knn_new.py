@@ -3,18 +3,19 @@ import matplotlib.pyplot as plt
 
 class KNN():
     def __init__(self,train_x,train_y,k=5):
-        train_x,train_y = self.sort(train_x,train_y)
-        return
-        self.x = self.preprocess_x(train_x)
-        self.y = np.array(train_y)
+        self.x,self.y = self.sort(train_x,train_y)
+        self.x.resize(self.x.shape[1],self.x.shape[0])
+        # self.y.reshape(self.y.shape[1],self.y.shape[0])
+        # print(self.x.shape)
+        # print(self.y.shape)
+        
         self.w = np.zeros(self.x.shape[0] + 1)
         self.lr = 0.00001
-
-
-        # for _ in range(10000):
-        #     self.update(self.x,self.y)
+        for _ in range(10000):
+            # print(self.w)
+            self.update(self.x,self.y)
         
-        # self.plot()    
+        self.plot()    
     def plot(self):
         fig = plt.figure(figsize=(10,10))
         plt.scatter(self.x,self.y)
@@ -22,8 +23,36 @@ class KNN():
         y = [self.predict(i) for i in x]
         plt.plot(x,y)
         plt.show()
-    def sort(self,x,y):
+    def sort(self,train_x:np.ndarray,train_y:np.ndarray):
+        train_x = np.array(train_x)
+        temp = np.ndarray
+        if(len(train_x.shape) == 1):
+            train_x.resize((train_x.shape[0],1))
+            train_y.resize((train_y.shape[0],1))
+            temp = np.concatenate([train_x,train_y],axis = 1)
+            temp = np.array(sorted(temp, key = lambda s: s[0]))
+            train_x = np.resize(temp[:,0],(train_x.shape[0],1))
+            train_y = temp[:,1]
+            # train_y = np.resize(temp[:,1],(train_y.shape[0],1))
+        else:
+            temp_x = train_x[:,0] * train_x[:,0]
+            for i in range(1,train_x.shape[1]):
+                temp_x += train_x[:,i] * train_x[:,i]
+            temp_x = temp_x ** 0.5
+            temp_x.resize((temp_x.shape[0],1))
+            train_y.resize((train_y.shape[0],1))
+            temp = np.concatenate([temp_x,train_x,train_y],axis = 1)
+            temp = np.array(sorted(temp, key = lambda s: s[0]))
+            train_x = temp[:,1:train_x.shape[1] + 1]
+            train_y = temp[:,train_x.shape[1] + 1]
+            # train_y = np.resize(temp[:,train_x.shape[1] + 1],(train_y.shape[0],1))
+            
+        return train_x,train_y
         
+        # for i in range(train_x.shape[1]):
+        #     rst.append(train_x[:,i])
+        # return np.array(rst)
+
 
     def predict(self,x):
         sum = self.w[0]
@@ -47,14 +76,6 @@ class KNN():
             rst += self.w[i] * x[i - 1]
         return rst
     
-    def preprocess_x(self,train_x)->np.ndarray:
-        train_x = np.array(train_x)
-        rst = []
-        if(len(train_x.shape) == 1):
-            train_x.resize((train_x.shape[0],1))
-        for i in range(train_x.shape[1]):
-            rst.append(train_x[:,i])
-        return np.array(rst)
 
 
 if __name__ == '__main__':
