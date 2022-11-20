@@ -63,23 +63,25 @@ class LW:
         Z = Z.reshape((self.node_num,self.node_num))
         ax.plot_surface(X,Y,Z,cmap='viridis')
         plt.show()   
-
-if __name__ == '__main__':
-    data = np.load('data1.npz')
-    train_x = data['X']
-    train_y = data['y']
-
+def accuracy(node_num,band_width):
+    acc = []
     lw = LW()
-    node_num = 50
-    band_width = 2
-    accuracy = []
     for _ in range(20):
         index = [i for i in range(1000)]
         index = np.random.choice(index,1000,replace=False)
         lw.fit(train_x[index[:900]], train_y[index[:900]],band_width=band_width,node_num=node_num)
         predict = lw.predict(train_x[index[900:]])[1]
-        accuracy.append(np.average(np.abs(train_y[index[900:]] - predict.squeeze())))
-    print(np.average(accuracy))
+        acc.append(np.average(np.abs(train_y[index[900:]] - predict.squeeze())))
+    print(np.average(acc))
+if __name__ == '__main__':
+    data = np.load('data2.npz')
+    train_x = data['X']
+    train_y = data['y']
+
+    lw = LW()
+    node_num = 50
+    band_width = 0.1
+    accuracy(node_num,band_width)
 
     lw.fit(train_x,train_y,band_width=band_width,node_num=node_num)
     if(lw.dim == 1):
