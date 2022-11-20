@@ -1,66 +1,88 @@
 import numpy as np
-import random
 import matplotlib.pyplot as plt
-
-class LWF:
+class LW:
     def __init__(self):
-        data = np.load("data1.npz")
-        self.a1 = data['X']
-        self.a2 = data['y']
+        pass
+    
+    def fit(self,train_x,train_y,band_width=0.08,node_num=100):
+        self.X = np.array(train_x)
+        self.Y = np.array(train_y)
+        self.size = self.Y.shape[0]
         try:
-            self.a1.shape[1]
+            self.dim = self.X.shape[1]
         except:
-            index = self.a1.argsort()
-            self.a1 = self.a1[index]
-            self.a2 = self.a2[index]            
-            self.a1.resize((self.a1.shape[0],1))
-        
-        self.a1 = np.concatenate([np.ones(shape=(self.a1.shape[0],1)),self.a1],axis = 1)
-        print(self.a1)
-        # self.a1,self.a2 = self.genData(100,10,0.6)
+            self.dim = 1
+            self.X.resize((self.size,1))
+        self.Y.resize((self.size,1))
+        self.band_width = band_width
+        self.node_num = node_num
+        self.d = -2 * self.band_width ** 2
 
-        print(self.a1.shape)
-        print(self.a2.shape)
 
-        a3 = []
-        for i in self.a1:
-            pdf = self.predict(self.a1,self.a2,i,1)
-            a3.append(pdf.tolist()[0])
+    def weight(self,point,X): 
+        w = np.mat(np.eye(self.size)) 
+        for i in range(self.size): 
+            temp = X[i] - point 
+            w[i, i] = np.exp(np.matmul(temp,temp.T)/self.d) 
+        return w
+
+    def predict(self,test_X): 
+        X = np.append(self.X, np.ones(self.size).reshape(self.size,1), axis=1)
+        theta = []
+        pred = []
+        for x in test_X:
+            try:
+                point = np.concatenate([x,np.ones((1))],axis=0)
+            except:
+                point = np.array([x,1])
+            w = self.weight(point,X) 
+            temp = np.linalg.pinv(X.T*(w * X))*(X.T*(w * self.Y)) 
+            theta.append(temp)
+            pred.append(np.matmul(point, temp)) 
+        return np.array(theta), np.array(pred)
+
+    def plot_2D(self):
+        test_X = np.linspace(0, 10, self.node_num)
+        test_X.resize((test_X.shape[0],1))
+        theta,Y = self.predict(test_X)
+        test_X = test_X.squeeze()
+        Y = Y.squeeze()
         plt.figure(figsize=(10,10))
-        plt.plot(self.a1[:,1],self.a2,"x")
-        plt.plot(self.a1[:,1],a3,"r--")
+        plt.scatter(self.X, self.Y)
+        plt.plot(test_X, Y, 'r')
         plt.show()
-    def kernel(self,x,x0,c,a=1.0):
-        diff = x - x0
-        dot_product = diff * diff.T
-        return a* np.exp(dot_product / (-2.0 * c ** 2))
-
-    def get_weights(self,train,data,c = 1.0):
-        x = np.mat(train)
-        n_rows = x.shape[0]
-        weights = np.mat(np.eye(n_rows))
-        for i in range(n_rows):
-            weights[i,i] = self.kernel(data,x[i],c)
-        return weights
-
-    def predict(self,train_in,train_out,data,c=1.0):
-        weights = self.get_weights(train_in,data,c=c)
-        x = np.mat(train_in)
-        y = np.mat(train_out).T
-        xt = x.T * (weights * x)
-        betas = xt.I * (x.T * (weights * y))
-        return data * betas
-
-    def genData(self,numPoints,bias,variance):
-        x = np.zeros(shape=(numPoints,2))
-        y = np.zeros(shape=numPoints)
-        for i in range(0,numPoints):
-            x[i][0] = 1
-            x[i][1] = i
-            y[i] = bias + i * variance + random.uniform(0,1) * 20
-        return x,y
+    def plot_3D(self):
+        fig = plt.figure(figsize=(10,8))
+        ax = plt.subplot(projection='3d')
+        ax.scatter(self.X[:,0],self.X[:,1],self.Y.T,c='r')
+        x = np.linspace(-3, 3, self.node_num)
+        y = np.linspace(-3, 3, self.node_num)
+        X, Y = np.meshgrid(x, y)
+        test_X = np.concatenate([X.reshape((self.node_num ** 2,1)),Y.reshape((self.node_num ** 2,1))],axis=1)
+        theta, Z = self.predict(test_X) 
+        Z = Z.reshape((self.node_num,self.node_num))
+        ax.plot_surface(X,Y,Z,cmap='viridis')
+        plt.show()   
 
 if __name__ == '__main__':
-    lwf = LWF()
-    # print(lwf.a1)
-    # print(lwf.a2)
+    data = np.load('data1.npz')
+    train_x = data['X']
+    train_y = data['y']
+
+    lw = LW()
+    node_num = 50
+    band_width = 2
+    accuracy = []
+    for _ in range(20):
+        index = [i for i in range(1000)]
+        index = np.random.choice(index,1000,replace=False)
+        lw.fit(train_x[index[:900]], train_y[index[:900]],band_width=band_width,node_num=node_num)
+        predict = lw.predict(train_x[index[900:]])[1]
+        accuracy.append(np.average(np.abs(train_y[index[900:]] - predict.squeeze())))
+    print(np.average(accuracy))
+
+    lw.fit(train_x,train_y,band_width=band_width,node_num=node_num)
+    if(lw.dim == 1):
+        lw.plot_2D()
+    elif(lw.dim == 2):
+        lw.plot_3D()
